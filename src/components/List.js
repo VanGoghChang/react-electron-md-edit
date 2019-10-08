@@ -33,7 +33,7 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
             {
                 files.map(file => (
                     <li
-                        className="list-group-item row bg-light d-flex align-items-center"
+                        className="list-group-item row bg-light d-flex align-items-center mx-0"
                         key={file.id}
                     >
                         {(file.id !== editStatus) &&
@@ -44,19 +44,19 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
                                 >
                                     <FontAwesomeIcon size="lg" icon={faFileAlt} />
                                 </span>
-                                <span className="col-7">
+                                <span className="col-6">
                                     {file.title}
                                 </span>
                                 <button
                                     type="button"
-                                    className="icon-button col-1"
+                                    className="icon-button col-2"
                                     onClick={() => { setEditStatus(file.id); setValue(file.title) }}
                                 >
                                     <FontAwesomeIcon size="lg" title="编辑" icon={faEdit} />
                                 </button>
                                 <button
                                     type="button"
-                                    className="icon-button col-1"
+                                    className="icon-button col-2"
                                     onClick={() => { onFileDelete(file.id) }}
                                 >
                                     <FontAwesomeIcon size="lg" title="删除" icon={faTrash} />

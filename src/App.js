@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import Search from './components/Search'
 import List from './components/List'
 import BottomButton from './components/BottomButton'
+import TabList from './components/TabList'
 import defaultListData from './utils/defaultListData'
 
 function App() {
@@ -43,8 +44,12 @@ function App() {
             </div>
           </div>
         </div>
-        <div className="col-8 bg-primary right-panel">
-          <h1>this is this right</h1>
+        <div className="col-8 right-panel">
+          <TabList 
+            files={defaultListData}
+            activeId={1}
+            onTabClick={(id) => { console.log(id) }}
+          />
         </div>
       </div>
     </div>
