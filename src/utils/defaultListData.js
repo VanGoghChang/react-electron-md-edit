@@ -10,7 +10,19 @@ const defaultListData = [
         title: "second post",
         body: "## this is the title",
         createdAt: 121321312
-    }
+    },
+    {
+        id: 3,
+        title: "hello world",
+        body: "## hello electron",
+        createdAt: 121321312
+    },
+    {
+        id: 4,
+        title: "hello react",
+        body: "## hello react",
+        createdAt: 121321312
+    },
 ]
 
 export default defaultListData
