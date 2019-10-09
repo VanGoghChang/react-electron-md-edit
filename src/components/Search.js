@@ -4,7 +4,7 @@ import { faSearch, faTimes } from "@fortawesome/free-solid-svg-icons"
 import PropTypes from "prop-types"
 import useKeyPress from "../hooks/useKeyPress"
 
-const Search = ({ title, onSearch }) => {
+const Search = ({ title, onSearch, onSearchClose }) => {
     const [inputActive, setInputActive] = useState(false)
     const [value, setValue] = useState("")
 
@@ -15,6 +15,7 @@ const Search = ({ title, onSearch }) => {
     const closeSearch = () => {
         setInputActive(false)
         setValue("")
+        onSearchClose()
     }
 
     useEffect(() => {

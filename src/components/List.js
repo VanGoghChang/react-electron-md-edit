@@ -10,23 +10,37 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
 
     const enterPressed = useKeyPress(13)
     const escPressed = useKeyPress(27)
-
-    const closeSearch = () => {
+    let node = useRef(null)
+    const closeSearch = (editItem) => {
         setEditStatus(false)
         setValue("")
+        if(editItem.isNew) onFileDelete(editItem.id)
     }
 
     useEffect(() => {
-        if (enterPressed && editStatus) {
-            const editItem = files.find(file => file.id === editStatus)
+        const newFile = files.find(file => file.isNew)
+        if(newFile) {
+            setEditStatus(newFile.id)
+            setValue(newFile.title)
+        }
+    }, [files])
+
+    useEffect(() => {
+        const editItem = files.find(file => file.id === editStatus)
+        if (enterPressed && editStatus && value.trim() !== "") {
             onSaveEdit(editItem.id, value)
             setEditStatus(false)
         }
-
         if (escPressed && editStatus) {
-            closeSearch()
+            closeSearch(editItem)
         }
     })
+
+    useEffect(() => {
+        if(editStatus){
+            node.current.focus()
+        }
+    },[editStatus])
 
     return (
         <ul className="list-group list-group-flush file-list">
@@ -36,7 +50,7 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
                         className="list-group-item row bg-light d-flex align-items-center mx-0"
                         key={file.id}
                     >
-                        {(file.id !== editStatus) &&
+                        {((file.id !== editStatus) && !file.isNew) &&
                             <>
                                 <span
                                     className="col-2 c-link"
@@ -63,18 +77,19 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
                                 </button>
                             </>
                         }
-                        {(file.id === editStatus) &&
+                        {((file.id === editStatus) || file.isNew)&&
                             <>
                                 <input
                                     className="form-control col-10"
                                     value={value}
-                                    // ref={node}
+                                    ref={node}
+                                    placeholder={"请输入文件名称"}
                                     onChange={e => { setValue(e.target.value) }}
                                 />
                                 <button
                                     type="button"
                                     className="icon-button col-2"
-                                    onClick={closeSearch}
+                                    onClick={() => closeSearch(file)}
                                 >
                                     <FontAwesomeIcon size="lg" title="取消" icon={faTimes} />
                                 </button>
