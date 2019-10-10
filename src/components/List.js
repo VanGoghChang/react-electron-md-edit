@@ -107,7 +107,7 @@ List.propTypes = {
     files: PropTypes.array,
     onFileClick: PropTypes.func,
     onSaveEdit: PropTypes.func,
-    onFileDelete: PropTypes
+    onFileDelete: PropTypes.func
 }
 
 export default List
