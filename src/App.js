@@ -10,20 +10,22 @@ import List from './components/List'
 import BottomButton from './components/BottomButton'
 import TabList from './components/TabList'
 import defaultListData from './utils/defaultListData'
+import { flattenArray, objectToArray } from './utils/helper'
+import fileHelper from './utils/fileHelper'
+
+// import Node module
+const Path = require('path')
+const { remote } = require('electron')
 
 function App() {
-
-  const [files, setFiles] = useState(defaultListData)
+  const [files, setFiles] = useState(flattenArray(defaultListData))
   const [unsaveFileIDs, setUnSaveFileIDs] = useState([])
   const [openFileIDs, setOpenFileIDs] = useState([])
   const [activeFileID, setActiveFileID] = useState("")
   const [searchFilesList, setSearchFilesList] = useState([])
 
-  const openedFiles = openFileIDs.map(openID => {
-    return files.find(file => openID === file.id)
-  })
-
-  const activedFile = files.find(file => activeFileID === file.id)
+  const filesArray = objectToArray(files)
+  // const fileStorageDirPath = Path.join(remote.app.)
 
   const fileClick = (fileID) => {
     setActiveFileID(fileID)
@@ -56,53 +58,52 @@ function App() {
     if(!unsaveFileIDs.includes(id)){
       setUnSaveFileIDs([ ...unsaveFileIDs, id ])
     }
-    const newFiles = files.map(file => {
-      if(file.id === id){
-          file["body"] = value
-      }
-      return file
-    })
-    setFiles(newFiles)
-  }
-
-  const deleteFile = (fileID) => {
-    const newFiles = files.filter(file => file.id !== fileID)
-    setFiles(newFiles)
-
-    tabClose(fileID)
+    const newFile = { ...files[id], body: value}
+    setFiles({ ...files, [id]: newFile})
   }
 
   const editFile = (id, value) => {
-    const newFiles = files.map(file => {
-      if(file.id === id){
-          file["title"] = value
-          file["isNew"] = false
-      }
-      return file
-    })
-    setFiles(newFiles)
+    if(file[id].isNew){
+      // create file
+      fileHelper.writeFile(join())
+    }else{
+      // update file name
+    }
+    const newFile = { ...files[id], title: value, isNew: false}
+    
+
+    setFiles({ ...files, [id]: newFile })
+  }
+
+  const deleteFile = (fileID) => {
+    delete files[fileID]
+    setFiles(files)
+    tabClose(fileID)
   }
 
   const searchFiles = (keywords) => {
-    const newFiles = files.filter(file => file.title.includes(keywords))
+    const newFiles = filesArray.filter(file => file.title.includes(keywords))
     setSearchFilesList(newFiles)
   }
 
   const createFile = () => {
-    const newFiles = [ ...files, {
-      id: uuidv4(),
+    const newID = uuidv4()
+    const newFiles =  {
+      id: newID,
       title: "",
       body: "## please input markdown",
       createdAt: new Date().getTime(),
       isNew: true
-    }]
-
-    setFiles(newFiles)
+    }
+    setFiles({ ...files, [newID]: newFiles })
   }
 
   const onSearchClose = () => setSearchFilesList([])
 
-  const filesListSource = (searchFilesList.length > 0)?searchFilesList: files
+  const activedFile = files[activeFileID]
+  const openedFiles = openFileIDs.map(openID => files[openID])
+
+  const filesListSource = (searchFilesList.length > 0)?searchFilesList: filesArray
   return (
     <div className="App container-fluid px-0">
       <div className="row no-gutters">
