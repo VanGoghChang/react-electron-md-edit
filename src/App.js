@@ -225,6 +225,14 @@ function App() {
                 onClick={importFiles}
               />
             </div>
+            <div className="col">
+              <BottomButton
+                text="Save"
+                colorClass="btn-success"
+                icon={faSave}
+                onClick={onSaveBody}
+              />
+            </div>
           </div>
         </div>
         <div className="col-8 right-panel">

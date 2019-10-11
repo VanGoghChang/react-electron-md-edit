@@ -8,3 +8,15 @@ export const flattenArray = (array) => {
 export const objectToArray = (obj) => {
     return Object.keys(obj).map(key => obj[key])
 }
+
+export const findParentNode = (node, parentClassName) => {
+    let current = node
+    while(current !== null){
+        console.log(current.classList)
+        if(current.classList.contains(parentClassName)){
+            return current
+        }
+        current = current.parentNode
+    }
+    return false
+}

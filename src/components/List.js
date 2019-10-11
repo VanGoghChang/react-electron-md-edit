@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from "react"
 import PropTypes from "prop-types"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faFileAlt, faEdit, faTrash, faTimes } from "@fortawesome/free-solid-svg-icons"
+import { findParentNode } from "../utils/helper"
 import useKeyPress from "../hooks/useKeyPress"
+import useContextMenu from "../hooks/useContextMenu"
 
 // import Node module
-const { remote } =  window.require("electron")
+const { remote } = window.require("electron")
 const Menu = remote.Menu
 const MenuItem = remote.MenuItem
 
@@ -19,33 +21,36 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
     const closeSearch = (editItem) => {
         setEditStatus(false)
         setValue("")
-        if(editItem.isNew) onFileDelete(editItem.id)
+        if (editItem.isNew) onFileDelete(editItem.id)
     }
 
-    useEffect(() => {
-        const menu = new Menu()
-        menu.append(new MenuItem({ label: "open", click: () => {
-            console.log("open")
-        }}))
-        menu.append(new MenuItem({ label: "rename", click: () => {
-            console.log("rename")
-        }}))
-        menu.append(new MenuItem({ label: "delete", click: () => {
-            console.log("delete")
-        }}))
-        const handleContextMenu = (e) => {
-            e.preventDefault()
-            menu.popup(remote.getCurrentWindow())
-        }
-        window.addEventListener('contextmenu', handleContextMenu, false)
-        return () => {
-            window.removeEventListener('contextmenu', handleContextMenu, false)
-        }
-    })
+    const clickedItem = useContextMenu([
+        {
+            label: "open",
+            click: () => {
+                const targetNode = findParentNode(clickedItem.current, "list-group-item")
+                if(targetNode){
+                    onFileClick(targetNode.dataset.id)
+                }
+            }
+        },
+        {
+            label: "rename",
+            click: () => {
+                console.log("rename")
+            }
+        },
+        {
+            label: "delete",
+            click: () => {
+                console.log("delete")
+            }
+        },
+    ], ".file-list")
 
     useEffect(() => {
         const newFile = files.find(file => file.isNew)
-        if(newFile) {
+        if (newFile) {
             setEditStatus(newFile.id)
             setValue(newFile.title)
         }
@@ -63,10 +68,10 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
     })
 
     useEffect(() => {
-        if(editStatus){
+        if (editStatus) {
             node.current.focus()
         }
-    },[editStatus])
+    }, [editStatus])
 
     return (
         <ul className="list-group list-group-flush file-list">
@@ -75,6 +80,8 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
                     <li
                         className="list-group-item row bg-light d-flex align-items-center mx-0"
                         key={file.id}
+                        data-id={file.id}
+                        data-title={file.title}
                     >
                         {((file.id !== editStatus) && !file.isNew) &&
                             <>
@@ -103,7 +110,7 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
                                 </button>
                             </>
                         }
-                        {((file.id === editStatus) || file.isNew)&&
+                        {((file.id === editStatus) || file.isNew) &&
                             <>
                                 <input
                                     className="form-control col-10"
