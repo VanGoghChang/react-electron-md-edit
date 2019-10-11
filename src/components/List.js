@@ -4,6 +4,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faFileAlt, faEdit, faTrash, faTimes } from "@fortawesome/free-solid-svg-icons"
 import useKeyPress from "../hooks/useKeyPress"
 
+// import Node module
+const { remote } =  window.require("electron")
+const Menu = remote.Menu
+const MenuItem = remote.MenuItem
+
 const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
     const [editStatus, setEditStatus] = useState(false)
     const [value, setValue] = useState("")
@@ -16,6 +21,27 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
         setValue("")
         if(editItem.isNew) onFileDelete(editItem.id)
     }
+
+    useEffect(() => {
+        const menu = new Menu()
+        menu.append(new MenuItem({ label: "open", click: () => {
+            console.log("open")
+        }}))
+        menu.append(new MenuItem({ label: "rename", click: () => {
+            console.log("rename")
+        }}))
+        menu.append(new MenuItem({ label: "delete", click: () => {
+            console.log("delete")
+        }}))
+        const handleContextMenu = (e) => {
+            e.preventDefault()
+            menu.popup(remote.getCurrentWindow())
+        }
+        window.addEventListener('contextmenu', handleContextMenu, false)
+        return () => {
+            window.removeEventListener('contextmenu', handleContextMenu, false)
+        }
+    })
 
     useEffect(() => {
         const newFile = files.find(file => file.isNew)

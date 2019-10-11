@@ -9,7 +9,6 @@ import Search from './components/Search'
 import List from './components/List'
 import BottomButton from './components/BottomButton'
 import TabList from './components/TabList'
-import defaultListData from './utils/defaultListData'
 import { flattenArray, objectToArray } from './utils/helper'
 import fileHelper from './utils/fileHelper'
 
@@ -20,10 +19,23 @@ const Store = window.require('electron-store')
 
 const store = new Store()
 
-// const 
+const saveFilesToStore = (data) => {
+  const fileStoreArray = objectToArray(data)
+  const fileStoreObje = fileStoreArray.reduce((result, file) => {
+    const { id, title, path, createdAt } = file
+    result[id] = {
+      id,
+      title,
+      path,
+      createdAt
+    }
+    return result
+  }, {})
+  store.set("files", fileStoreObje)
+}
 
 function App() {
-  const [files, setFiles] = useState(flattenArray(defaultListData))
+  const [files, setFiles] = useState(store.get("files") || {})
   const [unsaveFileIDs, setUnSaveFileIDs] = useState([])
   const [openFileIDs, setOpenFileIDs] = useState([])
   const [activeFileID, setActiveFileID] = useState("")
@@ -32,8 +44,19 @@ function App() {
   const filesArray = objectToArray(files)
   const fileSaveLocation = remote.app.getPath("documents")
 
+  console.log("render files___:", files)
+
   const fileClick = (fileID) => {
     setActiveFileID(fileID)
+    const activeFile = files[fileID]
+    console.log("activeFile__:", activeFile)
+    if (!activeFile.isLoaded) {
+      fileHelper.readFile(activeFile.path).then((value) => {
+        const newFile = { ...files[fileID], body: value, isLoaded: true }
+        setFiles({ ...files, [fileID]: newFile })
+      })
+    }
+
     if (!openFileIDs.includes(fileID)) {
       setOpenFileIDs([...openFileIDs, fileID])
     }
@@ -68,37 +91,42 @@ function App() {
   }
 
   const editFile = (id, title, isNew) => {
-    const newFile = { ...files[id], title, isNew: false }
-    const targetSavePath = Path.join(fileSaveLocation, `${title}.md`)
+    const targetSavePath = isNew?Path.join(targetSavePath, `${title}.md`):
+    Path.join(Path.dirname(files[id].path), `${title}.md`)
+    const newFile = { ...files[id], title, isNew: false, path: targetSavePath }
+    const newFiles = { ...files, [id]: newFile }
     if (isNew) {
-      // create file
+      // Create file
       fileHelper.writeFile(targetSavePath, files[id].body).then(() => {
-        setFiles({ ...files, [id]: newFile })
+        setFiles(newFiles)
+        // To store
+        saveFilesToStore(newFiles)
       })
     } else {
-      const oldPath = Path.join(fileSaveLocation, `${files[id].title}.md`)
-      // update file name
+      const oldPath = Path.join(Path.dirname(files[id].path), `${files[id].title}.md`)
+      // Update file name
       fileHelper.renameFile(oldPath, targetSavePath).then(() => {
-        setFiles({ ...files, [id]: newFile })
+        setFiles(newFiles)
+        // To store
+        saveFilesToStore(newFiles)
       })
     }
   }
 
   const deleteFile = (fileID) => {
-    delete (files[fileID])
-    setFiles(files)
-    tabClose(fileID)
-    // const targetDeletePath = Path.join(fileSaveLocation, `${files[fileID].title}.md`)
-    // if (files[fileID].isNew) {
-    //   const { [fileID]: value, ...afterDelete } = files
-    //   setFiles(afterDelete)
-    // } else {
-    //   fileHelper.deleteFile(targetDeletePath).then(() => {
-    //     const { [fileID]: value, ...afterDelete } = files
-    //     setFiles(afterDelete)
-    //     tabClose(fileID)
-    //   })
-    // }
+    if (files[fileID].isNew) {
+      const __files = { ...files }
+      delete __files[fileID]
+      setFiles(__files)
+    } else {
+      fileHelper.deleteFile(files[fileID].path).then(() => {
+        const __files = { ...files }
+        delete __files[fileID]
+        setFiles(__files)
+        saveFilesToStore(__files)
+        tabClose(fileID)
+      })
+    }
   }
 
   const searchFiles = (keywords) => {
@@ -119,7 +147,7 @@ function App() {
   }
 
   const onSaveBody = () => {
-    fileHelper.writeFile(Path.join(fileSaveLocation, `${activedFile.title}.md`), activedFile.body).then(() => {
+    fileHelper.writeFile(activedFile.path, activedFile.body).then(() => {
       setUnSaveFileIDs(unsaveFileIDs.filter(id => id !== activeFileID))
     })
   }
@@ -130,6 +158,41 @@ function App() {
   const openedFiles = openFileIDs.map(openID => files[openID])
 
   const filesListSource = (searchFilesList.length > 0) ? searchFilesList : filesArray
+
+  const importFiles = () => {
+    remote.dialog.showOpenDialog({
+      title: "选择需要导入的文件",
+      properties: ["openFile", "multiSelections"],
+      filters: [
+        {name: "MarkDown", extensions: ["md"]}
+      ]
+    }, (paths) => {
+      if(Array.isArray(paths) && paths.length > 0){
+        // filter out the path, already have path in electron store
+        const addNewFilesPath = paths.filter(path => {
+          const alreadyPath = Object.values(files).find(file => {
+            return file.path === path
+          })
+          return !alreadyPath
+        })
+        // extend the path array to an array contains files info
+        const importFilesPathArr = addNewFilesPath.map(path => {
+          return {
+            id: uuidv4(),
+            path,
+            title: Path.basename(path, Path.extname(path)),
+            createdAt: new Date().getTime()
+          }
+        })
+        // flatten files array
+        const newFiles = { ...files, ...flattenArray(importFilesPathArr) }
+        // setState && update electron store
+        setFiles(newFiles)
+        saveFilesToStore(newFiles)
+      }
+    })
+  }
+
   return (
     <div className="App container-fluid px-0">
       <div className="row no-gutters">
@@ -159,7 +222,7 @@ function App() {
                 text="导入"
                 colorClass="btn-success"
                 icon={faFileImport}
-                onClick={onSaveBody}
+                onClick={importFiles}
               />
             </div>
           </div>
