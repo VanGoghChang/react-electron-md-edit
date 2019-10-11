@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/cloud-log.iml" filepath="$PROJECT_DIR$/.idea/cloud-log.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/react-electron-md-edit.iml" filepath="$PROJECT_DIR$/.idea/react-electron-md-edit.iml" />
     </modules>
   </component>
 </project>

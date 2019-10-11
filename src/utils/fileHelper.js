@@ -1,4 +1,4 @@
-const fsPromises = window.require('fs').promises;
+const fsPromises = window.require('fs').promises
 
 const fileHelper = {
     readFile: (path) => {
@@ -16,4 +16,3 @@ const fileHelper = {
 }
 
 export default fileHelper
-
