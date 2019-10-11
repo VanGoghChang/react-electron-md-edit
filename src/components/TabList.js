@@ -10,6 +10,7 @@ const TabList = ({ files, activeId, unsaveIds, onTabClick, onCloseTab }) => {
         <ul className="nav nav-pills tab-list-container">
             {
                 files.map(file => {
+                    console.log("file@", file)
                     const withUnsaveMark = unsaveIds.includes(file.id)
                     const fClassName = classNames({
                         "nav-link": true,

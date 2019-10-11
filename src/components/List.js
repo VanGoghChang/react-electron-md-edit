@@ -37,13 +37,19 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
         {
             label: "rename",
             click: () => {
-                console.log("rename")
+                const targetNode = findParentNode(clickedItem.current, "list-group-item")
+                if(targetNode){
+                    setEditStatus(targetNode.dataset.id)
+                }
             }
         },
         {
             label: "delete",
             click: () => {
-                console.log("delete")
+                const targetNode = findParentNode(clickedItem.current, "list-group-item")
+                if(targetNode){
+                    onFileDelete(targetNode.dataset.id)
+                }
             }
         },
     ], ".file-list")
@@ -94,20 +100,6 @@ const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
                                 <span className="col-6">
                                     {file.title}
                                 </span>
-                                <button
-                                    type="button"
-                                    className="icon-button col-2"
-                                    onClick={() => { setEditStatus(file.id); setValue(file.title) }}
-                                >
-                                    <FontAwesomeIcon size="lg" title="编辑" icon={faEdit} />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="icon-button col-2"
-                                    onClick={() => { onFileDelete(file.id) }}
-                                >
-                                    <FontAwesomeIcon size="lg" title="删除" icon={faTrash} />
-                                </button>
                             </>
                         }
                         {((file.id === editStatus) || file.isNew) &&

@@ -46,6 +46,14 @@ function App() {
 
   console.log("render files___:", files)
 
+  const onSearchClose = () => setSearchFilesList([])
+
+  const activedFile = files[activeFileID]
+  console.log("openFileIDs____", openFileIDs)
+  const openedFiles = openFileIDs.map(openID => files[openID])
+
+  const filesListSource = (searchFilesList.length > 0) ? searchFilesList : filesArray
+
   const fileClick = (fileID) => {
     setActiveFileID(fileID)
     const activeFile = files[fileID]
@@ -68,6 +76,7 @@ function App() {
 
   const tabClose = (fileID) => {
     let newFiles = []
+    console.log("tabClose_______")
     if (openFileIDs.includes(fileID)) {
       newFiles = openFileIDs.filter(id => id !== fileID)
       setOpenFileIDs(newFiles)
@@ -91,7 +100,7 @@ function App() {
   }
 
   const editFile = (id, title, isNew) => {
-    const targetSavePath = isNew?Path.join(targetSavePath, `${title}.md`):
+    const targetSavePath = isNew?Path.join(fileSaveLocation, `${title}.md`):
     Path.join(Path.dirname(files[id].path), `${title}.md`)
     const newFile = { ...files[id], title, isNew: false, path: targetSavePath }
     const newFiles = { ...files, [id]: newFile }
@@ -115,16 +124,20 @@ function App() {
 
   const deleteFile = (fileID) => {
     if (files[fileID].isNew) {
-      const __files = { ...files }
-      delete __files[fileID]
-      setFiles(__files)
+      delete files[fileID]
+      setFiles({ ...files})
     } else {
       fileHelper.deleteFile(files[fileID].path).then(() => {
-        const __files = { ...files }
-        delete __files[fileID]
-        setFiles(__files)
-        saveFilesToStore(__files)
+        delete files[fileID]
+        console.log("__files:", files)
+        setFiles({ ...files})
+        console.log("start save to store__")
+        saveFilesToStore(files)
+        console.log("start tab close", fileID)
         tabClose(fileID)
+      })
+      .catch(() => {
+        saveFilesToStore({})
       })
     }
   }
@@ -152,12 +165,7 @@ function App() {
     })
   }
 
-  const onSearchClose = () => setSearchFilesList([])
-
-  const activedFile = files[activeFileID]
-  const openedFiles = openFileIDs.map(openID => files[openID])
-
-  const filesListSource = (searchFilesList.length > 0) ? searchFilesList : filesArray
+ 
 
   const importFiles = () => {
     remote.dialog.showOpenDialog({
