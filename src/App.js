@@ -11,6 +11,7 @@ import BottomButton from './components/BottomButton'
 import TabList from './components/TabList'
 import { flattenArray, objectToArray } from './utils/helper'
 import fileHelper from './utils/fileHelper'
+import useIpcRenderer from "./hooks/useIpcRenderer"
 
 // import Node module
 const Path = window.require('path')
@@ -42,14 +43,13 @@ function App() {
   const [searchFilesList, setSearchFilesList] = useState([])
 
   const filesArray = objectToArray(files)
-  const fileSaveLocation = remote.app.getPath("documents")
+  const fileSaveLocation = store.get("filesSavedLoaction") || remote.app.getPath("documents")
 
   console.log("render files___:", files)
 
   const onSearchClose = () => setSearchFilesList([])
 
   const activedFile = files[activeFileID]
-  console.log("openFileIDs____", openFileIDs)
   const openedFiles = openFileIDs.map(openID => files[openID])
 
   const filesListSource = (searchFilesList.length > 0) ? searchFilesList : filesArray
@@ -92,11 +92,13 @@ function App() {
   }
 
   const onChangeFile = (id, value) => {
-    if (!unsaveFileIDs.includes(id)) {
-      setUnSaveFileIDs([...unsaveFileIDs, id])
+    if(value !== files[id].body){
+      if (!unsaveFileIDs.includes(id)) {
+        setUnSaveFileIDs([...unsaveFileIDs, id])
+      }
+      const newFile = { ...files[id], body: value }
+      setFiles({ ...files, [id]: newFile })
     }
-    const newFile = { ...files[id], body: value }
-    setFiles({ ...files, [id]: newFile })
   }
 
   const editFile = (id, title, isNew) => {
@@ -159,7 +161,7 @@ function App() {
     setFiles({ ...files, [newID]: newFiles })
   }
 
-  const onSaveBody = () => {
+  const onSaveFile = () => {
     fileHelper.writeFile(activedFile.path, activedFile.body).then(() => {
       setUnSaveFileIDs(unsaveFileIDs.filter(id => id !== activeFileID))
     })
@@ -201,6 +203,13 @@ function App() {
     })
   }
 
+  useIpcRenderer({
+    'create-file': createFile,
+    'save-file': onSaveFile,
+    'import-file': importFiles,
+    'search-file': searchFiles
+  })
+
   return (
     <div className="App container-fluid px-0">
       <div className="row no-gutters">
@@ -231,14 +240,6 @@ function App() {
                 colorClass="btn-success"
                 icon={faFileImport}
                 onClick={importFiles}
-              />
-            </div>
-            <div className="col">
-              <BottomButton
-                text="Save"
-                colorClass="btn-success"
-                icon={faSave}
-                onClick={onSaveBody}
               />
             </div>
           </div>

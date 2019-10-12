@@ -1,4 +1,4 @@
-const { app, shell } = require('electron')
+const { app, shell, ipcMain } = require('electron')
 
 let template = [
     {
@@ -151,7 +151,10 @@ if (process.platform === 'darwin') {
             },
             {
                 label: "设置",
-                accelerator: 'Command+'
+                accelerator: 'Command+,',
+                click: (menuItem, browserWindow, event) => {
+                    ipcMain.emit('open-settings-window')
+                }
             },
             {
                 label: '服务',

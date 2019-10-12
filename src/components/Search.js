@@ -34,6 +34,8 @@ const Search = ({ title, onSearch, onSearchClose }) => {
         
     }, [inputActive])
 
+
+
     return (
         <div className="alert alert-primary d-flex justify-content-between align-items-center mb-0">
             {
