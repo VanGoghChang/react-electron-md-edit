@@ -1,15 +1,10 @@
 import React, { useState, useEffect, useRef } from "react"
 import PropTypes from "prop-types"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faFileAlt, faEdit, faTrash, faTimes } from "@fortawesome/free-solid-svg-icons"
+import { faFileAlt, faTimes } from "@fortawesome/free-solid-svg-icons"
 import { findParentNode } from "../utils/helper"
 import useKeyPress from "../hooks/useKeyPress"
 import useContextMenu from "../hooks/useContextMenu"
-
-// import Node module
-const { remote } = window.require("electron")
-const Menu = remote.Menu
-const MenuItem = remote.MenuItem
 
 const List = ({ files, onFileClick, onSaveEdit, onFileDelete }) => {
     const [editStatus, setEditStatus] = useState(false)

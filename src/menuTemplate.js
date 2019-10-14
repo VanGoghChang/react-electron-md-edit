@@ -1,4 +1,8 @@
 const { app, shell, ipcMain } = require('electron')
+const Store = require("electron-store")
+const store = new Store()
+const qiniuConfig = ["accessKey", "secretKey", "bucketName"].every(key => !!store.get(key))
+const autoSyncToCloud = store.get("autoSyncToCloud")
 
 let template = [
     {
@@ -66,6 +70,41 @@ let template = [
                 label: '全选',
                 accelerator: 'CmdOrCtrl+A',
                 role: 'selectall'
+            },
+        ]
+    },
+    {
+        label: '云同步',
+        submenu: [
+            {
+                label: "设置",
+                accelerator: 'Command+,',
+                click: (menuItem, browserWindow, event) => {
+                    ipcMain.emit('open-settings-window')
+                }
+            },
+            {
+                label: "自动同步",
+                type: "checkbox",
+                enabled: qiniuConfig,
+                checked: autoSyncToCloud,
+                click: (menuItem, browserWindow, event) => {
+                    store.set({"autoSyncToCloud": !autoSyncToCloud})
+                }
+            },
+            {
+                label: "全部同步至云端",
+                enabled: qiniuConfig,
+                click: (menuItem, browserWindow, event) => {
+                    
+                }
+            },
+            {
+                label: "从云端下载到本地",
+                enabled: qiniuConfig,
+                click: (menuItem, browserWindow, event) => {
+                    
+                }
             },
         ]
     },
@@ -148,13 +187,6 @@ if (process.platform === 'darwin') {
             },
             {
                 type: 'separator'
-            },
-            {
-                label: "设置",
-                accelerator: 'Command+,',
-                click: (menuItem, browserWindow, event) => {
-                    ipcMain.emit('open-settings-window')
-                }
             },
             {
                 label: '服务',

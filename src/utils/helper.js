@@ -20,3 +20,8 @@ export const findParentNode = (node, parentClassName) => {
     }
     return false
 }
+
+export const timeStampSerialize = (timeStamp) => {
+    const time = new Date(timeStamp)
+    return time.toLocaleDateString() + " " +time.toLocaleTimeString()
+}
