@@ -12,6 +12,7 @@ import TabList from './components/TabList'
 import { flattenArray, objectToArray, timeStampSerialize } from './utils/helper'
 import fileHelper from './utils/fileHelper'
 import useIpcRenderer from "./hooks/useIpcRenderer"
+import Loader from './components/Loader'
 
 // import Node module
 const Path = window.require('path')
@@ -45,8 +46,11 @@ function App() {
   const [openFileIDs, setOpenFileIDs] = useState([])
   const [activeFileID, setActiveFileID] = useState("")
   const [searchFilesList, setSearchFilesList] = useState([])
+  const [loading, setLoading] = useState(false)
 
+  console.log("files before___", files)
   const filesArray = objectToArray(files)
+  console.log("files array before___", filesArray, openFileIDs)
   const fileSaveLocation = store.get("savedFileLocation") || remote.app.getPath("documents")
 
   console.log("render files___:", files)
@@ -61,12 +65,18 @@ function App() {
   const fileClick = (fileID) => {
     setActiveFileID(fileID)
     const activeFile = files[fileID]
-    console.log("activeFile__:", activeFile)
-    if (!activeFile.isLoaded) {
-      fileHelper.readFile(activeFile.path).then((value) => {
-        const newFile = { ...files[fileID], body: value, isLoaded: true }
-        setFiles({ ...files, [fileID]: newFile })
-      })
+    const { isLoaded, path, id } = activeFile
+
+    if (!isLoaded) {
+      if (getAutoSync()) {
+        ipcRenderer.send("download-file", { key: Path.basename(path), path, id })
+      } else {
+        fileHelper.readFile(path).then((value) => {
+          const newFile = { ...files[fileID], body: value, isLoaded: true }
+          setFiles({ ...files, [fileID]: newFile })
+        })
+      }
+
     }
 
     if (!openFileIDs.includes(fileID)) {
@@ -78,15 +88,16 @@ function App() {
     setActiveFileID(fileID)
   }
 
-  const tabClose = (fileID) => {
+  const tabClose = (id) => {
     let newFiles = []
-    if (openFileIDs.includes(fileID)) {
-      newFiles = openFileIDs.filter(id => id !== fileID)
+    if (openFileIDs.includes(id)) {
+      newFiles = openFileIDs.filter(id => id !== id)
+      console.log("newFiles_______________", newFiles)
       setOpenFileIDs(newFiles)
     }
 
     if (newFiles.length > 0) {
-      if (fileID === activeFileID) {
+      if (id === activeFileID) {
         setActiveFileID(newFiles[0])
       }
     } else {
@@ -127,16 +138,22 @@ function App() {
     }
   }
 
-  const deleteFile = (fileID) => {
-    if (files[fileID].isNew) {
-      delete files[fileID]
-      setFiles({ ...files })
+  const deleteFile = (id) => {
+    if (files[id].isNew) {
+      const newfiles = { ...files }
+      delete newfiles[id]
+      setFiles(newfiles)
     } else {
-      fileHelper.deleteFile(files[fileID].path).then(() => {
-        delete files[fileID]
-        setFiles({ ...files })
-        saveFilesToStore(files)
-        tabClose(fileID)
+      fileHelper.deleteFile(files[id].path).then(() => {
+        const newfiles = { ...files }
+        delete newfiles[id]
+        console.log("newFiles___", newfiles, files)
+        tabClose(id)
+        setFiles(newfiles)
+        saveFilesToStore(newfiles)
+        if (getAutoSync()) {
+          ipcRenderer.send("delete-file", { key: Path.basename.path(files[id].path) })
+        }
       })
         .catch(() => {
           saveFilesToStore({})
@@ -162,13 +179,15 @@ function App() {
   }
 
   const onSaveFile = () => {
-    const { path, body } = activedFile
-    fileHelper.writeFile(path, body).then(() => {
-      setUnSaveFileIDs(unsaveFileIDs.filter(id => id !== activeFileID))
-      if (getAutoSync()) {
-        ipcRenderer.send("uplaod-file", { key: `${Path.basename(path)}`, path })
-      }
-    })
+    if(Object.keys(activedFile).length > 0){
+      const { path, body } = activedFile
+      fileHelper.writeFile(path, body).then(() => {
+        setUnSaveFileIDs(unsaveFileIDs.filter(id => id !== activeFileID))
+        if (getAutoSync()) {
+          ipcRenderer.send("uplaod-file", { key: `${Path.basename(path)}`, path })
+        }
+      })
+    }
   }
 
   const importFiles = () => {
@@ -205,7 +224,7 @@ function App() {
     })
   }
 
-  const uploadedActiveFiles = () => {
+  const activeFilesUploaded = () => {
     console.log("uploaded-active-file")
     const { id } = activedFile
     // flatten files array
@@ -216,16 +235,48 @@ function App() {
     saveFilesToStore(newFiles)
   }
 
+  const allFilesUploaded = () => {
+    const newFiles = objectToArray(files).reduce((obj, file) => {
+      const updatedAt = new Date().getTime()
+      obj[file.id] = { ...files[file.id], isSynced: true, updatedAt }
+      return obj
+    }, {})
+    setFiles(newFiles)
+    saveFilesToStore(newFiles)
+  }
+
+  const filesDownload = (event, message) => {
+    const currentFile = files[message.id]
+    const { id, path } = currentFile
+    fileHelper.readFile(path).then(value => {
+      let newFile
+      console.log("download status:", message.status)
+      if (message.status === "download-success") {
+        newFile = { ...files[id], body: value, isLoaded: true, isSynced: true, updatedAt: new Date().getTime() }
+      } else {
+        newFile = { ...files[id], body: value, isLoaded: true }
+      }
+      const newFiles = { ...files, [id]: newFile }
+      // setState && update electron store
+      setFiles(newFiles)
+      saveFilesToStore(newFiles)
+    })
+  }
+
   useIpcRenderer({
     'create-file': createFile,
     'save-file': onSaveFile,
     'import-file': importFiles,
     'search-file': searchFiles,
-    'uploaded-active-file': uploadedActiveFiles
+    'file-uploaded': activeFilesUploaded,
+    'all-files-uploaded': allFilesUploaded,
+    'file-downloaded': filesDownload,
+    'loading-status': (event, message) => { setLoading(message) },
   })
-
+console.log("activedFile_____", activedFile)
   return (
     <div className="App container-fluid px-0">
+      {loading ? <Loader /> : null}
       <div className="row no-gutters">
         <div className="col-4 left-panel">
           <Search
@@ -281,7 +332,7 @@ function App() {
                 onChange={(value) => { onChangeFile(activeFileID, value) }}
                 options={{ minHeight: "515px" }}
               />
-              {activedFile.isSynced ? <span className="sync-status">已同步，上次同步{timeStampSerialize(activedFile.updatedAt)}</span> : null}
+              {activedFile && activedFile.isSynced ? <span className="sync-status">已同步，上次同步{timeStampSerialize(activedFile.updatedAt)}</span> : null}
             </>
           }
         </div>
