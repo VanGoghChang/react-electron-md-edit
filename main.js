@@ -20,9 +20,9 @@ app.on("ready", () => {
         width: 1440,
         height: 768
     }
-    const urlLocation = isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "./build/index.html")}`
+    const urlLocation = isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "./index.html")}`
     mainWindow = new AppWindow(mainWindowConfig, urlLocation)
-    mainWindow.webContents.openDevTools()
+    // mainWindow.webContents.openDevTools()
     mainWindow.on('closed', () => {
         mainWindow = null
     })
@@ -36,7 +36,7 @@ app.on("ready", () => {
         }
         const settingsFileLocation = `file://${path.join(__dirname, './settings/settings.html')}`
         settingsWindow = new AppWindow(settingsWindowConfig, settingsFileLocation)
-        settingsWindow.webContents.openDevTools()
+        // settingsWindow.webContents.openDevTools()
         settingsWindow.on('closed', () => {
             settingsWindow = null
         })

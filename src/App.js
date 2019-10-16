@@ -48,9 +48,7 @@ function App() {
   const [searchFilesList, setSearchFilesList] = useState([])
   const [loading, setLoading] = useState(false)
 
-  console.log("files before___", files)
   const filesArray = objectToArray(files)
-  console.log("files array before___", filesArray, openFileIDs)
   const fileSaveLocation = store.get("savedFileLocation") || remote.app.getPath("documents")
 
   console.log("render files___:", files)
