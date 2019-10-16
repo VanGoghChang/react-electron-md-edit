@@ -1,31 +1,89 @@
 {
   "name": "cloud-log",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "main.js",
+  "description": "Online editor",
+  "author": {
+    "name": "VanGoghChang"
+  },
+  "repository": "https://github.com/VanGoghChang/react-electron-md-edit",
   "private": true,
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.25",
-    "@fortawesome/free-solid-svg-icons": "^5.11.2",
-    "@fortawesome/react-fontawesome": "^0.1.5",
     "axios": "^0.19.0",
     "bootstrap": "^4.3.1",
-    "classnames": "^2.2.6",
-    "electron-store": "^5.0.0",
-    "node-sass": "^4.12.0",
-    "qiniu": "^7.2.2",
-    "react": "^16.10.1",
-    "react-dom": "^16.10.1",
-    "react-scripts": "3.1.2",
-    "react-simplemde-editor": "^4.1.0",
-    "uuid": "^3.3.3"
+    "electron-is-dev": "^1.1.0",
+    "electron-store": "^4.0.0",
+    "qiniu": "^7.2.2"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
+    "buildMain": "webpack",
     "onlyEle": "nodemon --watch main.js --watch src/menuTemplate.js --exec \"electron .\"",
-    "dev": "concurrently \"wait-on http://localhost:3000 && electron .\" \"cross-env BROWSER=none npm run start \""
+    "dev": "concurrently \"wait-on http://localhost:3000 && electron .\" \"cross-env BROWSER=none npm run start \"",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "prepack": "npm run build",
+    "predist": "npm run build"
+  },
+  "homepage": "./",
+  "build": {
+    "appId": "cloudLog",
+    "productName": "Editor",
+    "copyright": "Copyright © 2019 ${author}",
+    "files": [
+      "main.js",
+      "build/**/*",
+      "node_modules/**/*",
+      "settings/**/*",
+      "package.json",
+      "./src/menuTemplate.js",
+      "./src/AppWindow.js",
+      "./src/utils/QiniuManager.js"
+    ],
+    "extends": null,
+    "mac": {
+      "category": "public.app-category.productivity",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "dmg": {
+      "background": "assets/appdmg.png",
+      "icon": "assets/icon.icns",
+      "iconSize": 100,
+      "contents": [
+        {
+          "x": 380,
+          "y": 280,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 110,
+          "y": 280,
+          "type": "file"
+        }
+      ],
+      "window": {
+        "width": 500,
+        "height": 500
+      }
+    },
+    "win": {
+      "target": [
+        "msi",
+        "nsis"
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-Web-Setup-${version}.${ext}",
+      "publisherName": "VanGoghChang"
+    },
+    "nsis": {
+      "allowToChangeInstallationDirectory": true,
+      "oneClick": false,
+      "perMachine": false
+    }
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -43,11 +101,24 @@
     ]
   },
   "devDependencies": {
-    "concurrently": "^4.1.2",
-    "cross-env": "^6.0.0",
-    "electron": "^6.0.10",
-    "electron-is-dev": "^1.1.0",
-    "nodemon": "^1.19.3",
-    "wait-on": "^3.3.0"
+    "@fortawesome/fontawesome-svg-core": "^1.2.19",
+    "@fortawesome/free-brands-svg-icons": "^5.9.0",
+    "@fortawesome/free-solid-svg-icons": "^5.9.0",
+    "@fortawesome/react-fontawesome": "^0.1.4",
+    "classnames": "^2.2.6",
+    "concurrently": "^4.1.1",
+    "cross-env": "^5.2.0",
+    "electron": "^6.0.12",
+    "electron-builder": "^21.2.0",
+    "electron-store": "^4.0.0",
+    "electron-updater": "^4.1.2",
+    "node-sass": "^4.12.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-scripts": "3.0.1",
+    "react-simplemde-editor": "^4.1.0",
+    "uuid": "^3.3.2",
+    "wait-on": "^3.3.0",
+    "webpack-cli": "^3.3.9"
   }
 }

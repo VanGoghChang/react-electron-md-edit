@@ -20,7 +20,7 @@ app.on("ready", () => {
         width: 1440,
         height: 768
     }
-    const urlLocation = isDev ? "http://localhost:3000" : "dummyurl"
+    const urlLocation = isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "./build/index.html")}`
     mainWindow = new AppWindow(mainWindowConfig, urlLocation)
     mainWindow.webContents.openDevTools()
     mainWindow.on('closed', () => {
@@ -64,37 +64,37 @@ app.on("ready", () => {
     // Upload active file
     ipcMain.on("uplaod-file", (event, data) => {
         const manager = createManager()
-        if(manager){
+        if (manager) {
             const { key, path } = data
             manager.uploadFiles(key, path)
-            .then(result => {
-                console.log("uplaod file result___", result)
-                if(result && result.key === key){
-                    console.log("云端同步成功")
-                    event.reply("file-uploaded")
-                }
-            }, error => {
-                if(error.statusCode === 614){ // file is exists
-                    console.log("file is exists...")
-                    manager.deleteFile(key).then(res => {
-                        console.log("delete file result____:", res)
-                        return manager.uploadFiles(key, path)
-                    }, error => {
+                .then(result => {
+                    console.log("uplaod file result___", result)
+                    if (result && result.key === key) {
+                        console.log("云端同步成功")
+                        event.reply("file-uploaded")
+                    }
+                }, error => {
+                    if (error.statusCode === 614) { // file is exists
+                        console.log("file is exists...")
+                        manager.deleteFile(key).then(res => {
+                            console.log("delete file result____:", res)
+                            return manager.uploadFiles(key, path)
+                        }, error => {
+                            dialog.showErrorBox("云端同步失败", "请检查云端配置项是否正确")
+                        }).then(result => {
+                            console.log("uplaod file result___", result)
+                            if (result && result.key === key) {
+                                console.log("云端同步成功")
+                                event.reply("file-uploaded")
+                            }
+                        })
+                    } else {
                         dialog.showErrorBox("云端同步失败", "请检查云端配置项是否正确")
-                    }).then(result => {
-                        console.log("uplaod file result___", result)
-                        if(result && result.key === key){
-                            console.log("云端同步成功")
-                            event.reply("file-uploaded")
-                        }
-                    })
-                }else{
+                    }
+                })
+                .catch(err => {
                     dialog.showErrorBox("云端同步失败", "请检查云端配置项是否正确")
-                }
-            })
-            .catch(err => {
-                dialog.showErrorBox("云端同步失败", "请检查云端配置项是否正确")
-            })
+                })
         }
     })
 
@@ -104,8 +104,8 @@ app.on("ready", () => {
         // event.reply("loading-status", true) ----- ipcMain.emit send no event
         setLoadingStatus(true)
         const manager = createManager()
-        const files = store.get("files") ||  {}
-        if(manager){
+        const files = store.get("files") || {}
+        if (manager) {
             const requestArray = Object.keys(files).map(id => {
                 const { title, path } = files[id]
                 return manager.uploadFiles(title, path)
@@ -133,30 +133,30 @@ app.on("ready", () => {
         setLoadingStatus(true)
         const manager = createManager()
         const files = store.get("files")
-        const { key, path, id } = data       
+        const { key, path, id } = data
         manager.getFileInfoInCloud(key).then(res => {
             console.log("download-file______:", res)
-            const serverUpdateTime = Math.round(res.putTime/10000) //putTime is nm
+            const serverUpdateTime = Math.round(res.putTime / 10000) //putTime is nm
             const loaclUpdateTime = files[id].updatedAt
 
-            console.log(serverUpdateTime , loaclUpdateTime)
-            if(serverUpdateTime > loaclUpdateTime || !loaclUpdateTime){
+            console.log(serverUpdateTime, loaclUpdateTime)
+            if (serverUpdateTime > loaclUpdateTime || !loaclUpdateTime) {
                 manager.downloadFiles(key, path).then(() => {
-                    event.reply("file-downloaded", {status: "download-success", id})
+                    event.reply("file-downloaded", { status: "download-success", id })
                     setLoadingStatus(false)
                 })
-            }else{
-                event.reply("file-downloaded", {status: "no-new-file", id})
+            } else {
+                event.reply("file-downloaded", { status: "no-new-file", id })
                 setLoadingStatus(false)
             }
         }, error => {
-           if(error.statusCode === 612) {
-               event.reply("file-downloaded", {status: "no-file", id})
-               setLoadingStatus(false)
-           }
+            if (error.statusCode === 612) {
+                event.reply("file-downloaded", { status: "no-file", id })
+                setLoadingStatus(false)
+            }
         }).catch(err => {
-            if(err){
-                event.reply("file-downloaded", {status: "download-error", id})
+            if (err) {
+                event.reply("file-downloaded", { status: "download-error", id })
                 setLoadingStatus(false)
             }
         })
@@ -165,21 +165,21 @@ app.on("ready", () => {
     // Delete file
     ipcMain.on("delete-file", (event, data) => {
         const manager = createManager()
-        if(manager) {
+        if (manager) {
             manager.deleteFile(data.key)
-            .then(res => {
-                console.log("delete result___:", res)
-                dialog.showMessageBox({
-                    type: "info",
-                    title: `云端删除成功`,
-                    message: `云端删除成功`
+                .then(res => {
+                    console.log("delete result___:", res)
+                    dialog.showMessageBox({
+                        type: "info",
+                        title: `云端删除成功`,
+                        message: `云端删除成功`
+                    })
                 })
-            })
-            .catch(error => {
-                console.log("delete error___:", error)
-                dialog.showErrorBox("云端删除失败", "请检查云端配置项是否正确")
-            })
-        
+                .catch(error => {
+                    console.log("delete error___:", error)
+                    dialog.showErrorBox("云端删除失败", "请检查云端配置项是否正确")
+                })
+
         }
     })
 
